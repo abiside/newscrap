@@ -50,39 +50,56 @@ class Source
             }
         });
 
-        $feedsToGet->each(function ($feed) {
-            $posts = $this->getPosts($feed);
+        return $feedsToGet->flatMap(function ($feed) {
+            return $this->getPosts($feed);
         });
-
-        // return $this->getPostData($titleLink->getAttribute('href'), $post);
     }
 
     protected function getPosts($feed)
     {
         $scrapMap = Arr::get($feed, 'scrap.map');
         $url = $this->getFeedUrl(Arr::get($feed, 'feed'));
-        $content = $this->httpClient->get($url);
+        $posts = [];
 
-        $items = collect($content->find(Arr::get($scrapMap, 'items')));
-        $valuesScrapMap = Arr::get($scrapMap, 'values');
+        if ($content = $this->httpClient->get($url)) {
+            $items = collect($content->find(Arr::get($scrapMap, 'items')));
+            $valuesScrapMap = Arr::get($scrapMap, 'values');
 
-        $posts = $items->map(function ($item) use ($valuesScrapMap) {
-            foreach ($valuesScrapMap as $field => $scrapMap) {
-                $aux = explode('|', $scrapMap);
-                $scrapMap = Arr::first($aux);
-                $prop = Arr::get($aux, 1);
+            $posts = $items->map(function ($item) use ($valuesScrapMap) {
+                foreach ($valuesScrapMap as $field => $scrapMap) {
 
-                $valueTag = Arr::first($item->find($scrapMap));
+                    $aux = explode('|', $scrapMap);
+                    $scrapMap = Arr::first($aux);
+                    $prop = Arr::get($aux, 1);
 
-                $post[$field] = $prop
-                    ? $valueTag->getAttribute($prop)
-                    : $valueTag->text;
-            }
+                    $valueTag = Arr::first($item->find($scrapMap));
 
-            return $post;
-        });
+                    $post[$field] = $prop
+                        ? $this->getDomAttributeValue($valueTag, $prop)
+                        : $valueTag->text;
+                }
+
+                return $post;
+            });
+        }
 
         return $posts;
+    }
+
+    public function getDomAttributeValue($dom, $prop)
+    {
+        $attributeValue = $dom->getAttribute($prop);
+
+        if (! str_starts_with($attributeValue, 'data:image')) return $attributeValue;
+
+        // Find for an embed SVG image
+        $strAux = explode(',', $attributeValue);
+        $str = base64_decode(Arr::get($strAux, 1));
+        $dom = $this->httpClient->getDomFromString($str);
+        $svg = Arr::first($dom->find('svg'));
+        $imageUrl = $svg->getAttribute('data-u');
+
+        return $imageUrl ? urldecode($imageUrl) : null;
     }
 
     /**

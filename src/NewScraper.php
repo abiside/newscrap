@@ -30,7 +30,20 @@ class NewScraper
     {
         $source = $this->getActiveSource($source);
 
-        $posts = $source->getFeedPosts($feed);
+        return $source->getFeedPosts($feed);
+    }
+
+    /**
+     * Return the latest posts for the given source
+     *
+     * @param  string  $source
+     * @param  string|array  $feed
+     */
+    public function getPost(string $link, array $post, string $source = null, $feed = null)
+    {
+        $source = $this->getActiveSource($source);
+
+        return $source->getPostData($link, $post);
     }
 
     /**

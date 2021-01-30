@@ -28,11 +28,30 @@ class HttpClient
      */
     public function makeRequest($url, $method = 'get'): ?Dom
     {
-        $response = Http::{$method}($url);
+        // TODO: Check why HTTP doesn't work
+        //$response = Http::{$method}($url);
 
-        return $response->successful()
-            ? (new Dom)->loadStr($response->body(),
-                (new Options())->setRemoveStyles(false)
-            ) : null;
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+            CURLOPT_RETURNTRANSFER => 1,
+            CURLOPT_URL => $url
+        ));
+
+        $response = curl_exec($curl);
+
+        return $response ? $this->getDomFromString($response) : null;
+    }
+
+    /**
+     * Return the DOM element for the given string
+     *
+     * @param  string  $html
+     * @return PHPHtmlParser\Dom
+     */
+    public function getDomFromString(string $html)
+    {
+        return (new Dom)->loadStr($html,
+            (new Options())->setRemoveStyles(false)
+        );
     }
 }

@@ -56,13 +56,17 @@ class Superlider extends Source
             $body .= "<p>{$block->text}</p>";
         }
 
+        if(empty($image)) {
+            $imgDom = Arr::first($post->find('div.single-post-thumb > img'));
+            $image = $this->getDomAttributeValue($imgDom, 'src');
+        }
+
         $postData = array_merge($postData, [
             'image' => $image,
-            'body' => $body,
+            'content' => $body,
         ]);
 
-        dd($postData);
-
+        return $postData;
     }
 
 }
