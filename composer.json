@@ -6,6 +6,18 @@
         "guzzlehttp/guzzle": "^7.2",
         "paquettg/php-html-parser": "^3.1"
     },
+    "autoload": {
+        "psr-4": {
+            "Abiside\\NewScrap\\": "src"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Abiside\\NewScrap\\NewScrapServiceProvider"
+            ]
+        }
+    },
     "license": "MIT",
     "authors": [
         {
