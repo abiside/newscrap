@@ -2,6 +2,7 @@
 
 namespace Abiside\NewScrap;
 
+use Abiside\NewScrap\Sources\Mediotiempo;
 use Abiside\NewScrap\Sources\Superlider;
 use Illuminate\Support\Arr;
 
@@ -13,12 +14,8 @@ class NewScraper
     /** @var array */
     protected $availableSources = [
         'superlider' => Superlider::class,
+        'mediotiempo' => Mediotiempo::class,
     ];
-
-    public function __construct()
-    {
-
-    }
 
     /**
      * Return the latest posts for the given source

@@ -63,6 +63,7 @@ class Source
 
         if ($content = $this->httpClient->get($url)) {
             $items = collect($content->find(Arr::get($scrapMap, 'items')));
+
             $valuesScrapMap = Arr::get($scrapMap, 'values');
 
             $posts = $items->map(function ($item) use ($valuesScrapMap) {
@@ -75,7 +76,7 @@ class Source
                     $valueTag = Arr::first($item->find($scrapMap));
 
                     $post[$field] = $prop
-                        ? $this->getDomAttributeValue($valueTag, $prop)
+                        ? $this->getDomAttributeValue($valueTag, $prop, $field)
                         : $valueTag->text;
                 }
 
@@ -86,11 +87,19 @@ class Source
         return $posts;
     }
 
-    public function getDomAttributeValue($dom, $prop)
+    public function getDomAttributeValue($dom, $prop, $field)
     {
         $attributeValue = $dom->getAttribute($prop);
 
-        if (! str_starts_with($attributeValue, 'data:image')) return $attributeValue;
+        // If we identify the content is not an image wrapper and refers to
+        // one of the links attributes
+        if (! str_starts_with($attributeValue, 'data:image')) {
+            if (in_array($field, ['thumbnail', 'link'])) {
+                $attributeValue = $this->normalizeUrl($attributeValue);
+            }
+
+            return $attributeValue;
+        }
 
         // Find for an embed SVG image
         $strAux = explode(',', $attributeValue);
@@ -100,6 +109,17 @@ class Source
         $imageUrl = $svg->getAttribute('data-u');
 
         return $imageUrl ? urldecode($imageUrl) : null;
+    }
+
+    public function normalizeUrl(string $url)
+    {
+        if (! str_starts_with($url, 'http')) {
+            $clean = trim($url, '/');
+
+            $url = "{$this->baseUrl}/$clean";
+        }
+
+        return $url;
     }
 
     /**
