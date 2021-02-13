@@ -49,7 +49,8 @@ class Mediotiempo extends Source
         $body = "";
         $blocks = $entry->find('p');
         foreach ($blocks as $block) {
-            $body .= "<p>{$block->text}</p>";
+            $text = $this->cleanText($block->text);
+            $body .= "<p>{$text}</p>";
         }
 
         $postData = array_merge($postData, [

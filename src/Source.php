@@ -77,7 +77,7 @@ class Source
 
                     $post[$field] = $prop
                         ? $this->getDomAttributeValue($valueTag, $prop, $field)
-                        : $valueTag->text;
+                        : $this->cleanText($valueTag->text);
                 }
 
                 return $post;
@@ -87,14 +87,14 @@ class Source
         return $posts;
     }
 
-    public function getDomAttributeValue($dom, $prop, $field)
+    public function getDomAttributeValue($dom, $prop, $field = null)
     {
         $attributeValue = $dom->getAttribute($prop);
 
         // If we identify the content is not an image wrapper and refers to
         // one of the links attributes
         if (! str_starts_with($attributeValue, 'data:image')) {
-            if (in_array($field, ['thumbnail', 'link'])) {
+            if (in_array($field, ['thumbnail', 'link', 'image'])) {
                 $attributeValue = $this->normalizeUrl($attributeValue);
             }
 
@@ -120,6 +120,17 @@ class Source
         }
 
         return $url;
+    }
+
+    /**
+     * Return a clear text from the given one
+     *
+     * @param  string  $text
+     * @return string
+     */
+    public function cleanText(string $text)
+    {
+        return htmlspecialchars_decode($text, ENT_QUOTES);
     }
 
     /**
