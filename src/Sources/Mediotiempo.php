@@ -42,15 +42,41 @@ class Mediotiempo extends Source
         $post = $this->httpClient->get($link);
 
         // Get Image
-        //dd($post->find('div.img-container > img'));
         $image = Arr::first($post->find('div.img-container > img'))->getAttribute('src');
-
         $entry = Arr::first($post->find('div#content-body'));
+
+        // Delete the div with recommended posts
+        $toDelete = $entry->find('div.nd-rnd-media')[0];
+        $toDelete->delete();
+        unset($toDelete);
+
         $body = "";
-        $blocks = $entry->find('p');
-        foreach ($blocks as $block) {
-            $text = $this->cleanText($block->text);
-            $body .= "<p>{$text}</p>";
+
+        // Remove empty paragraphs or with line breaks
+        $parapgraphs = $entry->find('> p');
+        foreach ($parapgraphs as $key => $p) {
+            $content = trim(strip_tags($p->innerHtml));
+
+            if (mb_strlen($content) > 3) {
+                $body .= $p->outerHtml;
+            }
+        }
+
+        $divs = $entry->find('> div');
+        foreach ($divs as $key => $parentDiv) {
+            // Find youtube videos
+            $nestedDivs = $parentDiv->find('div');
+            $divContent = $parentDiv->outerHtml;
+
+            if (count($nestedDivs)) {
+                foreach ($nestedDivs as $key => $div) {
+                    if ($videoId = $div->getAttribute('video-id')) {
+                        $divContent = '<div>' . $this->embedYoutube($videoId) . '</div>';
+                    }
+                }
+            }
+
+            $body .= $divContent;
         }
 
         $postData = array_merge($postData, [
