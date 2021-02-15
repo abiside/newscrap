@@ -52,32 +52,44 @@ class Mediotiempo extends Source
 
         $body = "";
 
-        // Remove empty paragraphs or with line breaks
-        $parapgraphs = $entry->find('> p');
-        foreach ($parapgraphs as $key => $p) {
-            $content = trim(strip_tags($p->innerHtml));
+        $child = $entry->firstChild();
 
-            if (mb_strlen($content) > 3) {
-                $body .= $p->outerHtml;
-            }
-        }
+        do {
+            $tag = $child->getTag()->name();
+            switch ($tag) {
+                // For paragraphs
+                case 'p':
+                    $content = trim(strip_tags($child->innerHtml));
 
-        $divs = $entry->find('> div');
-        foreach ($divs as $key => $parentDiv) {
-            // Find youtube videos
-            $nestedDivs = $parentDiv->find('div');
-            $divContent = $parentDiv->outerHtml;
-
-            if (count($nestedDivs)) {
-                foreach ($nestedDivs as $key => $div) {
-                    if ($videoId = $div->getAttribute('video-id')) {
-                        $divContent = '<div>' . $this->embedYoutube($videoId) . '</div>';
+                    if (mb_strlen($content) > 3) {
+                        $body .= $child->outerHtml;
                     }
-                }
+                    break;
+
+                // For divs
+                case 'div':
+                    $nestedDivs = $child->find('div');
+                    $divContent = $child->outerHtml;
+
+                    if (count($nestedDivs)) {
+                        foreach ($nestedDivs as $key => $div) {
+                            if ($videoId = $div->getAttribute('video-id')) {
+                                $divContent = '<div>' . $this->embedYoutube($videoId) . '</div>';
+                            }
+                        }
+                    }
+
+                    $body .= $divContent;
+                    break;
+
+                // For images
+                case 'img':
+                    $body .= $child->outerHtml;
+
             }
 
-            $body .= $divContent;
-        }
+            $child = $child->hasNextSibling() ? $child->nextSibling() : false;
+        } while ($child);
 
         $postData = array_merge($postData, [
             'image' => $image,
