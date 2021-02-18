@@ -46,9 +46,10 @@ class Mediotiempo extends Source
         $entry = Arr::first($post->find('div#content-body'));
 
         // Delete the div with recommended posts
-        $toDelete = $entry->find('div.nd-rnd-media')[0];
-        $toDelete->delete();
-        unset($toDelete);
+        if ($toDelete = $entry->find('div.nd-rnd-media')[0]) {
+            $toDelete->delete();
+            unset($toDelete);
+        };
 
         $body = "";
 
@@ -57,13 +58,12 @@ class Mediotiempo extends Source
         do {
             $tag = $child->getTag()->name();
             switch ($tag) {
+                // For images
+                case 'img':
+                    $body .= $child->outerHtml;
                 // For paragraphs
                 case 'p':
-                    $content = trim(strip_tags($child->innerHtml));
-
-                    if (mb_strlen($content) > 3) {
-                        $body .= $child->outerHtml;
-                    }
+                    $body .= ! $this->domIsEmpty($child) ? $child->outerHtml : "";
                     break;
 
                 // For divs
@@ -71,21 +71,21 @@ class Mediotiempo extends Source
                     $nestedDivs = $child->find('div');
                     $divContent = $child->outerHtml;
 
+                    if ($this->domIsEmpty($child)) break;
+
                     if (count($nestedDivs)) {
-                        foreach ($nestedDivs as $key => $div) {
+                        foreach ($nestedDivs as $div) {
                             if ($videoId = $div->getAttribute('video-id')) {
                                 $divContent = '<div>' . $this->embedYoutube($videoId) . '</div>';
+
+                            } else if ($div->getAttribute('class') == 'see-also') {
+                                $divContent = "";
                             }
                         }
                     }
 
                     $body .= $divContent;
                     break;
-
-                // For images
-                case 'img':
-                    $body .= $child->outerHtml;
-
             }
 
             $child = $child->hasNextSibling() ? $child->nextSibling() : false;

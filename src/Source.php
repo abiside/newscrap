@@ -4,6 +4,8 @@ namespace Abiside\NewScrap;
 
 use Abiside\NewScrap\Post;
 use Illuminate\Support\Arr;
+use PHPHtmlParser\Dom\Node\HtmlNode as Dom;
+
 class Source
 {
     /** @var string */
@@ -131,6 +133,19 @@ class Source
     public function cleanText(string $text)
     {
         return htmlspecialchars_decode($text, ENT_QUOTES);
+    }
+
+    /**
+     * Return if a dom element is empty
+     *
+     * @param  \PHPHtmlParser\Dom\Node\HtmlNode  $dom
+     * @return bool
+     */
+    public function domIsEmpty(Dom $dom): bool
+    {
+        $content = trim(strip_tags($dom->innerHtml));
+
+        return mb_strlen($content) < 3;
     }
 
     /**
