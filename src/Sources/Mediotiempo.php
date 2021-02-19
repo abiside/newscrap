@@ -45,6 +45,8 @@ class Mediotiempo extends Source
         $image = Arr::first($post->find('div.img-container > img'))->getAttribute('src');
         $entry = Arr::first($post->find('div#content-body'));
 
+        if (is_null($entry)) return null;
+
         // Delete the div with recommended posts
         if ($toDelete = $entry->find('div.nd-rnd-media')[0]) {
             $toDelete->delete();
