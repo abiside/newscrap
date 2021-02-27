@@ -39,13 +39,14 @@ class Mediotiempo extends Source
      */
     public function getPostData(string $link, array $postData)
     {
+
         $post = $this->httpClient->get($link);
 
         // Get Image
-        $image = Arr::first($post->find('div.img-container > img'))->getAttribute('src');
+        $image = optional(Arr::first($post->find('div.img-container > img')))->getAttribute('src');
         $entry = Arr::first($post->find('div#content-body'));
 
-        if (is_null($entry)) return null;
+        if (is_null($entry) || is_null($image)) return null;
 
         // Delete the div with recommended posts
         if ($toDelete = $entry->find('div.nd-rnd-media')[0]) {
